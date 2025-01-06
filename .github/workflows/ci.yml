@@ -21,7 +21,7 @@ jobs:
       - run: |
           docker run --rm --privileged multiarch/qemu-user-static:register --reset
 
-      - uses: docker://riscv/riscv64-ubuntu:latest
+      - uses: docker://riscv64/ubuntu:latest
         with:
           args: >
             bash -c
