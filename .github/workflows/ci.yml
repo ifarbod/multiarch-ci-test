@@ -31,7 +31,7 @@ jobs:
             apt-get install -y build-essential unzip &&
             cd /github/workspace &&
             gcc --version
-            g++ -v -o mainexe main.cpp
+            g++ -v main.cpp -o mainexe
             ls -la mainexe &&
             chmod 755 mainexe"
 
