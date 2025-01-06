@@ -21,7 +21,7 @@ jobs:
       - run: |
           docker run --rm --privileged multiarch/qemu-user-static:register --reset
 
-      - uses: docker://ghcr.io/amyspark/ubuntu-server:riscv64-bionic
+      - uses: docker://ghcr.io/amyspark/ubuntu-server:riscv64-23.10
         with:
           args: >
             bash -c
