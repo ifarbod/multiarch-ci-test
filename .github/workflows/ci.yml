@@ -21,12 +21,14 @@ jobs:
       - run: |
           docker run --rm --privileged multiarch/qemu-user-static:register --reset
 
-      - uses: docker://ghcr.io/amyspark/ubuntu-server:riscv64-22.10
+      - uses: docker://ghcr.io/amyspark/ubuntu-server:riscv64-23.10
         with:
           args: >
             bash -c
             "uname -a && cat /etc/os-release &&
-            apt-get update && apt-get install -y build-essential unzip &&
+            sed -i 's|http://ports.ubuntu.com/ubuntu-ports|http://old-releases.ubuntu.com/ubuntu|g' /etc/apt/sources.list &&
+            apt-get update &&
+            apt-get install -y build-essential unzip &&
             cd /github/workspace &&
             g++ main.cpp"
 
