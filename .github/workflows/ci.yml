@@ -27,19 +27,10 @@ jobs:
             bash -c
             "uname -a && cat /etc/os-release &&
             sed -i 's|http://ports.ubuntu.com/ubuntu-ports|http://old-releases.ubuntu.com/ubuntu|g' /etc/apt/sources.list &&
-            apt-get update &&
-            apt-get install -y build-essential unzip &&
             cd /github/workspace &&
-            gcc --version
-            g++ -v main.cpp -o mainexe
-            ls -la mainexe &&
+            pwd &&
+            ls -la &&
             chmod 755 mainexe"
 
       - name: List files
         run: ls -la
-
-      - name: Upload Artifact
-        uses: actions/upload-artifact@v4
-        with:
-          name: mainexe
-          path: ./mainexe
