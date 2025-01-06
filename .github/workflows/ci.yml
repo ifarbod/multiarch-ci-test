@@ -14,7 +14,7 @@ jobs:
         group: ${{ github.ref }}-${{ github.base_ref }}-${{ github.head_ref }}-UbuntuRiscV64
         cancel-in-progress: true
     steps:
-      - uses: actions/checkout@v2
+      - uses: actions/checkout@v4
         with:
           submodules: true
 
@@ -30,6 +30,7 @@ jobs:
             sed -i 's|http://ports.ubuntu.com/ubuntu-ports|http://old-releases.ubuntu.com/ubuntu|g' /etc/apt/sources.list && apt-get update &&
 
             apt-get install -y build-essential unzip &&
+            curl -fsSL https://xmake.io/shget.text | bash &&
             gcc --version &&
             g++ -o mainexe main.cpp &&
             ls -la"
