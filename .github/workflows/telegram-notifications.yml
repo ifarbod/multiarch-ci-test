@@ -45,13 +45,14 @@ jobs:
           token: ${{ secrets.TELEGRAM_BOT_TOKEN }}
           format: markdown
           message: |
-            🚀 *New Push to ${{ github.ref_name }}*
+            🚀 *Code pushed to ${{ github.ref_name }} branch*
             
-            👤 *Author:* [${{ github.actor }}](https://github.com/${{ github.actor }})
-            📝 *Commit:* `${{ github.event.head_commit.id }}`
-            💬 *Message:* ${{ github.event.head_commit.message }}
+            🔗 [View Commit](https://github.com/${{ github.repository }}/commit/${{ github.sha }})
             
-            🔗 [View Changes](https://github.com/${{ github.repository }}/commit/${{ github.sha }})
+            👤 *Author:* ${{ github.actor }}
+            📝 *Commit ID:* `${{ github.event.head_commit.id }}`
+            💬 *Commit Message:* ${{ github.event.head_commit.message }}
+            
             📊 [Repository](https://github.com/${{ github.repository }})
 
       # Pull Request notifications
