@@ -1,0 +1,345 @@
+name: 📱 Telegram Notifications
+
+on:
+  push:
+    branches: [ main, master, develop ]
+  pull_request:
+    types: [opened, closed, reopened, synchronize, ready_for_review, converted_to_draft]
+  pull_request_review:
+    types: [submitted, edited, dismissed]
+  pull_request_review_comment:
+    types: [created, edited, deleted]
+  issues:
+    types: [opened, closed, reopened, edited, assigned, unassigned, labeled, unlabeled]
+  issue_comment:
+    types: [created, edited, deleted]
+  release:
+    types: [published, unpublished, created, edited, deleted, prereleased, released]
+  workflow_run:
+    workflows: ["*"]
+    types: [completed, requested]
+  deployment:
+    types: [created]
+  deployment_status:
+    types: [created]
+  check_run:
+    types: [completed]
+
+jobs:
+  notify-telegram:
+    runs-on: ubuntu-latest
+    if: github.actor != 'dependabot[bot]'
+    
+    steps:
+      - name: 📋 Checkout Repository
+        uses: actions/checkout@v4
+        with:
+          fetch-depth: 0
+
+      # Push notifications
+      - name: 🚀 Push Notification
+        if: github.event_name == 'push'
+        uses: appleboy/telegram-action@master
+        with:
+          to: ${{ secrets.TELEGRAM_CHAT_ID }}
+          token: ${{ secrets.TELEGRAM_BOT_TOKEN }}
+          format: markdown
+          message: |
+            🚀 *New Push to ${{ github.ref_name }}*
+            
+            👤 *Author:* [${{ github.actor }}](https://github.com/${{ github.actor }})
+            📝 *Commit:* `${{ github.event.head_commit.id }}`
+            💬 *Message:* ${{ github.event.head_commit.message }}
+            
+            🔗 [View Changes](https://github.com/${{ github.repository }}/commit/${{ github.sha }})
+            📊 [Repository](https://github.com/${{ github.repository }})
+
+      # Pull Request notifications
+      - name: 📬 Pull Request Opened
+        if: github.event_name == 'pull_request' && github.event.action == 'opened'
+        uses: appleboy/telegram-action@master
+        with:
+          to: ${{ secrets.TELEGRAM_CHAT_ID }}
+          token: ${{ secrets.TELEGRAM_BOT_TOKEN }}
+          format: markdown
+          message: |
+            🔄 *New Pull Request Opened*
+            
+            👤 *Author:* [${{ github.event.pull_request.user.login }}](https://github.com/${{ github.event.pull_request.user.login }})
+            📋 *Title:* ${{ github.event.pull_request.title }}
+            🌿 *Branch:* `${{ github.event.pull_request.head.ref }}` → `${{ github.event.pull_request.base.ref }}`
+            📊 *Changes:* +${{ github.event.pull_request.additions }} -${{ github.event.pull_request.deletions }}
+            
+            💭 *Description:*
+            ${{ github.event.pull_request.body || 'No description provided' }}
+            
+            🔗 [View Pull Request](${{ github.event.pull_request.html_url }})
+
+      - name: ✅ Pull Request Merged
+        if: github.event_name == 'pull_request' && github.event.action == 'closed' && github.event.pull_request.merged == true
+        uses: appleboy/telegram-action@master
+        with:
+          to: ${{ secrets.TELEGRAM_CHAT_ID }}
+          token: ${{ secrets.TELEGRAM_BOT_TOKEN }}
+          format: markdown
+          message: |
+            ✅ *Pull Request Merged*
+            
+            👤 *Author:* [${{ github.event.pull_request.user.login }}](https://github.com/${{ github.event.pull_request.user.login }})
+            👤 *Merged by:* [${{ github.actor }}](https://github.com/${{ github.actor }})
+            📋 *Title:* ${{ github.event.pull_request.title }}
+            🌿 *Branch:* `${{ github.event.pull_request.head.ref }}` → `${{ github.event.pull_request.base.ref }}`
+            
+            🔗 [View Pull Request](${{ github.event.pull_request.html_url }})
+
+      - name: ❌ Pull Request Closed
+        if: github.event_name == 'pull_request' && github.event.action == 'closed' && github.event.pull_request.merged == false
+        uses: appleboy/telegram-action@master
+        with:
+          to: ${{ secrets.TELEGRAM_CHAT_ID }}
+          token: ${{ secrets.TELEGRAM_BOT_TOKEN }}
+          format: markdown
+          message: |
+            ❌ *Pull Request Closed Without Merge*
+            
+            👤 *Author:* [${{ github.event.pull_request.user.login }}](https://github.com/${{ github.event.pull_request.user.login }})
+            📋 *Title:* ${{ github.event.pull_request.title }}
+            🌿 *Branch:* `${{ github.event.pull_request.head.ref }}` → `${{ github.event.pull_request.base.ref }}`
+            
+            🔗 [View Pull Request](${{ github.event.pull_request.html_url }})
+
+      # Pull Request Review notifications
+      - name: 👀 Pull Request Review Submitted
+        if: github.event_name == 'pull_request_review' && github.event.action == 'submitted'
+        uses: appleboy/telegram-action@master
+        with:
+          to: ${{ secrets.TELEGRAM_CHAT_ID }}
+          token: ${{ secrets.TELEGRAM_BOT_TOKEN }}
+          format: markdown
+          message: |
+            👀 *Pull Request Review: ${{ github.event.review.state }}*
+            
+            👤 *Reviewer:* [${{ github.event.review.user.login }}](https://github.com/${{ github.event.review.user.login }})
+            📋 *PR:* ${{ github.event.pull_request.title }}
+            ${{ github.event.review.state == 'approved' && '✅' || github.event.review.state == 'changes_requested' && '🔄' || '💬' }} *Status:* ${{ github.event.review.state }}
+            
+            ${{ github.event.review.body && format('💭 *Comment:*\n{0}', github.event.review.body) || '' }}
+            
+            🔗 [View Review](${{ github.event.review.html_url }})
+
+      # Pull Request Review Comment notifications
+      - name: 💬 Review Comment
+        if: github.event_name == 'pull_request_review_comment' && github.event.action == 'created'
+        uses: appleboy/telegram-action@master
+        with:
+          to: ${{ secrets.TELEGRAM_CHAT_ID }}
+          token: ${{ secrets.TELEGRAM_BOT_TOKEN }}
+          format: markdown
+          message: |
+            💬 *New Review Comment*
+            
+            👤 *Commenter:* [${{ github.event.comment.user.login }}](https://github.com/${{ github.event.comment.user.login }})
+            📋 *PR:* ${{ github.event.pull_request.title }}
+            📁 *File:* `${{ github.event.comment.path }}`
+            
+            💭 *Comment:*
+            ${{ github.event.comment.body }}
+            
+            🔗 [View Comment](${{ github.event.comment.html_url }})
+
+      # Issue notifications
+      - name: 🐛 Issue Opened
+        if: github.event_name == 'issues' && github.event.action == 'opened'
+        uses: appleboy/telegram-action@master
+        with:
+          to: ${{ secrets.TELEGRAM_CHAT_ID }}
+          token: ${{ secrets.TELEGRAM_BOT_TOKEN }}
+          format: markdown
+          message: |
+            🐛 *New Issue Opened*
+            
+            👤 *Author:* [${{ github.event.issue.user.login }}](https://github.com/${{ github.event.issue.user.login }})
+            📋 *Title:* ${{ github.event.issue.title }}
+            🏷️ *Labels:* ${{ join(github.event.issue.labels.*.name, ', ') || 'None' }}
+            
+            💭 *Description:*
+            ${{ github.event.issue.body || 'No description provided' }}
+            
+            🔗 [View Issue](${{ github.event.issue.html_url }})
+
+      - name: ✅ Issue Closed
+        if: github.event_name == 'issues' && github.event.action == 'closed'
+        uses: appleboy/telegram-action@master
+        with:
+          to: ${{ secrets.TELEGRAM_CHAT_ID }}
+          token: ${{ secrets.TELEGRAM_BOT_TOKEN }}
+          format: markdown
+          message: |
+            ✅ *Issue Closed*
+            
+            👤 *Closed by:* [${{ github.actor }}](https://github.com/${{ github.actor }})
+            📋 *Title:* ${{ github.event.issue.title }}
+            🏷️ *Labels:* ${{ join(github.event.issue.labels.*.name, ', ') || 'None' }}
+            
+            🔗 [View Issue](${{ github.event.issue.html_url }})
+
+      # Issue Comment notifications
+      - name: 💬 Issue Comment
+        if: github.event_name == 'issue_comment' && github.event.action == 'created'
+        uses: appleboy/telegram-action@master
+        with:
+          to: ${{ secrets.TELEGRAM_CHAT_ID }}
+          token: ${{ secrets.TELEGRAM_BOT_TOKEN }}
+          format: markdown
+          message: |
+            💬 *New Comment on Issue*
+            
+            👤 *Commenter:* [${{ github.event.comment.user.login }}](https://github.com/${{ github.event.comment.user.login }})
+            📋 *Issue:* ${{ github.event.issue.title }}
+            
+            💭 *Comment:*
+            ${{ github.event.comment.body }}
+            
+            🔗 [View Comment](${{ github.event.comment.html_url }})
+
+      # Release notifications
+      - name: 🎉 Release Published
+        if: github.event_name == 'release' && github.event.action == 'published'
+        uses: appleboy/telegram-action@master
+        with:
+          to: ${{ secrets.TELEGRAM_CHAT_ID }}
+          token: ${{ secrets.TELEGRAM_BOT_TOKEN }}
+          format: markdown
+          message: |
+            🎉 *New Release Published*
+            
+            👤 *Author:* [${{ github.event.release.author.login }}](https://github.com/${{ github.event.release.author.login }})
+            🏷️ *Tag:* `${{ github.event.release.tag_name }}`
+            📋 *Name:* ${{ github.event.release.name }}
+            ${{ github.event.release.prerelease && '🚧 *Pre-release*' || '' }}
+            
+            📝 *Release Notes:*
+            ${{ github.event.release.body || 'No release notes provided' }}
+            
+            🔗 [View Release](${{ github.event.release.html_url }})
+            💾 [Download Assets](${{ github.event.release.html_url }})
+
+      # Workflow run notifications
+      - name: ✅ Workflow Success
+        if: github.event_name == 'workflow_run' && github.event.workflow_run.conclusion == 'success'
+        uses: appleboy/telegram-action@master
+        with:
+          to: ${{ secrets.TELEGRAM_CHAT_ID }}
+          token: ${{ secrets.TELEGRAM_BOT_TOKEN }}
+          format: markdown
+          message: |
+            ✅ *Workflow Completed Successfully*
+            
+            🔧 *Workflow:* ${{ github.event.workflow_run.name }}
+            🌿 *Branch:* `${{ github.event.workflow_run.head_branch }}`
+            👤 *Triggered by:* [${{ github.event.workflow_run.triggering_actor.login }}](https://github.com/${{ github.event.workflow_run.triggering_actor.login }})
+            ⏱️ *Duration:* ${{ github.event.workflow_run.run_started_at }} - ${{ github.event.workflow_run.updated_at }}
+            
+            🔗 [View Workflow Run](${{ github.event.workflow_run.html_url }})
+
+      - name: ❌ Workflow Failure
+        if: github.event_name == 'workflow_run' && github.event.workflow_run.conclusion == 'failure'
+        uses: appleboy/telegram-action@master
+        with:
+          to: ${{ secrets.TELEGRAM_CHAT_ID }}
+          token: ${{ secrets.TELEGRAM_BOT_TOKEN }}
+          format: markdown
+          message: |
+            ❌ *Workflow Failed*
+            
+            🔧 *Workflow:* ${{ github.event.workflow_run.name }}
+            🌿 *Branch:* `${{ github.event.workflow_run.head_branch }}`
+            👤 *Triggered by:* [${{ github.event.workflow_run.triggering_actor.login }}](https://github.com/${{ github.event.workflow_run.triggering_actor.login }})
+            ⏱️ *Duration:* ${{ github.event.workflow_run.run_started_at }} - ${{ github.event.workflow_run.updated_at }}
+            
+            🔗 [View Failed Run](${{ github.event.workflow_run.html_url }})
+            🔍 [Check Logs](${{ github.event.workflow_run.html_url }})
+
+      # Deployment notifications
+      - name: 🚀 Deployment Started
+        if: github.event_name == 'deployment'
+        uses: appleboy/telegram-action@master
+        with:
+          to: ${{ secrets.TELEGRAM_CHAT_ID }}
+          token: ${{ secrets.TELEGRAM_BOT_TOKEN }}
+          format: markdown
+          message: |
+            🚀 *Deployment Started*
+            
+            🌍 *Environment:* ${{ github.event.deployment.environment }}
+            🌿 *Branch:* `${{ github.event.deployment.ref }}`
+            👤 *Deployer:* [${{ github.event.deployment.creator.login }}](https://github.com/${{ github.event.deployment.creator.login }})
+            
+            📋 *Description:* ${{ github.event.deployment.description || 'No description provided' }}
+
+      - name: ✅ Deployment Success
+        if: github.event_name == 'deployment_status' && github.event.deployment_status.state == 'success'
+        uses: appleboy/telegram-action@master
+        with:
+          to: ${{ secrets.TELEGRAM_CHAT_ID }}
+          token: ${{ secrets.TELEGRAM_BOT_TOKEN }}
+          format: markdown
+          message: |
+            ✅ *Deployment Successful*
+            
+            🌍 *Environment:* ${{ github.event.deployment.environment }}
+            🌿 *Branch:* `${{ github.event.deployment.ref }}`
+            👤 *Deployer:* [${{ github.event.deployment.creator.login }}](https://github.com/${{ github.event.deployment.creator.login }})
+            
+            ${{ github.event.deployment_status.target_url && format('🔗 [View Deployment]({0})', github.event.deployment_status.target_url) || '' }}
+
+      - name: ❌ Deployment Failed
+        if: github.event_name == 'deployment_status' && github.event.deployment_status.state == 'failure'
+        uses: appleboy/telegram-action@master
+        with:
+          to: ${{ secrets.TELEGRAM_CHAT_ID }}
+          token: ${{ secrets.TELEGRAM_BOT_TOKEN }}
+          format: markdown
+          message: |
+            ❌ *Deployment Failed*
+            
+            🌍 *Environment:* ${{ github.event.deployment.environment }}
+            🌿 *Branch:* `${{ github.event.deployment.ref }}`
+            👤 *Deployer:* [${{ github.event.deployment.creator.login }}](https://github.com/${{ github.event.deployment.creator.login }})
+            
+            📋 *Error:* ${{ github.event.deployment_status.description || 'No error details provided' }}
+
+      # Check run notifications (for external CI/CD tools)
+      - name: ✅ Check Run Success
+        if: github.event_name == 'check_run' && github.event.check_run.conclusion == 'success' && github.event.check_run.app.name != 'GitHub Actions'
+        uses: appleboy/telegram-action@master
+        with:
+          to: ${{ secrets.TELEGRAM_CHAT_ID }}
+          token: ${{ secrets.TELEGRAM_BOT_TOKEN }}
+          format: markdown
+          message: |
+            ✅ *External Check Passed*
+            
+            🔧 *Check:* ${{ github.event.check_run.name }}
+            📱 *App:* ${{ github.event.check_run.app.name }}
+            🌿 *Branch:* `${{ github.event.check_run.head_sha }}`
+            
+            🔗 [View Details](${{ github.event.check_run.html_url }})
+
+      - name: ❌ Check Run Failure
+        if: github.event_name == 'check_run' && github.event.check_run.conclusion == 'failure' && github.event.check_run.app.name != 'GitHub Actions'
+        uses: appleboy/telegram-action@master
+        with:
+          to: ${{ secrets.TELEGRAM_CHAT_ID }}
+          token: ${{ secrets.TELEGRAM_BOT_TOKEN }}
+          format: markdown
+          message: |
+            ❌ *External Check Failed*
+            
+            🔧 *Check:* ${{ github.event.check_run.name }}
+            📱 *App:* ${{ github.event.check_run.app.name }}
+            🌿 *Branch:* `${{ github.event.check_run.head_sha }}`
+            
+            📋 *Summary:* ${{ github.event.check_run.output.summary || 'No details provided' }}
+            
+            🔗 [View Details](${{ github.event.check_run.html_url }})
