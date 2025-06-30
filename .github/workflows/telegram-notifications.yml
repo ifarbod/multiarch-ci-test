@@ -49,7 +49,7 @@ jobs:
             
             🔗 [View Commit](https://github.com/${{ github.repository }}/commit/${{ github.sha }})
             
-            👤 *Author:* ${{ github.actor }}
+            👤 *Author:* [${{ github.actor }}](https://github.com/${{ github.actor }})
             📝 *Commit ID:* `${{ github.event.head_commit.id }}`
             💬 *Commit Message:* ${{ github.event.head_commit.message }}
             
